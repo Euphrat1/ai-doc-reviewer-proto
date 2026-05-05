@@ -14,3 +14,14 @@ streamlit run app.py
 5) (Если используете PII сервис)
 Запустить PII Masking Service отдельно
 В приложении указать PII_SERVICE_URL (в сайдбаре)
+
+Вариант 1 (рекомендую): без активации, через пути
+Создать venv:
+
+python -m venv .venv
+Установить зависимости:
+
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+Запустить Streamlit:
+
+.\.venv\Scripts\python.exe -m streamlit run app.py

@@ -1,0 +1,214 @@
+openapi: 3.0.3
+info:
+  title: PII Masking Service API
+  version: 0.1.0
+  description: |
+    Contract for the local HTTP service that masks PII.
+    This file is mirrored from the PII service repository. See `contracts/pii/SYNCED_FROM.txt`.
+servers:
+  - url: http://localhost:8081
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+  /methods:
+    get:
+      summary: List masking methods
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Method"
+  /mask:
+    post:
+      summary: Mask PII (sync)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MaskRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaskResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "413":
+          description: Payload too large
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Backend unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "504":
+          description: Backend timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /mask_async:
+    post:
+      summary: Mask PII (async)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MaskRequest"
+      responses:
+        "200":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobCreated"
+  /jobs/{job_id}:
+    get:
+      summary: Get async job status/result
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobStatus"
+components:
+  schemas:
+    Health:
+      type: object
+      required: [status, version, api_version, uptime]
+      properties:
+        status: { type: string }
+        version: { type: string, description: "Service semver" }
+        api_version: { type: integer, description: "API protocol version (client expects 1)" }
+        uptime: { type: number }
+    Method:
+      type: object
+      required: [id, name, supports_async, pii_types, input_limits]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        supports_async: { type: boolean }
+        pii_types:
+          type: array
+          items: { type: string }
+        input_limits:
+          type: object
+          required: [max_chars]
+          properties:
+            max_chars: { type: integer }
+        models_supported:
+          type: array
+          items: { type: string }
+    MaskRequest:
+      type: object
+      required: [method_id, text]
+      properties:
+        method_id: { type: string }
+        text: { type: string }
+        options: { type: object }
+        trace_id: { type: string }
+    Replacement:
+      type: object
+      required: [mask, type, original]
+      properties:
+        mask: { type: string, example: "<PERSON_1>" }
+        type: { type: string, example: "PERSON" }
+        original: { type: string }
+    Stats:
+      type: object
+      required: [elapsed_ms, replacements_count, method_id]
+      properties:
+        elapsed_ms: { type: integer }
+        replacements_count: { type: integer }
+        method_id: { type: string }
+        model_id: { type: string }
+        input_chars: { type: integer }
+        output_chars: { type: integer }
+        chunks_total: { type: integer }
+        chunks_done: { type: integer }
+    MaskResponse:
+      type: object
+      required: [masked_text, replacements, warnings, stats, trace_id]
+      properties:
+        masked_text: { type: string }
+        replacements:
+          type: array
+          items: { $ref: "#/components/schemas/Replacement" }
+        warnings:
+          type: array
+          items: { type: string }
+        stats: { $ref: "#/components/schemas/Stats" }
+        trace_id: { type: string }
+    JobCreated:
+      type: object
+      required: [job_id, trace_id]
+      properties:
+        job_id: { type: string }
+        trace_id: { type: string }
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        details: { type: object }
+    ErrorResponse:
+      type: object
+      required: [error, trace_id]
+      properties:
+        error: { $ref: "#/components/schemas/Error" }
+        trace_id: { type: string }
+    JobStatus:
+      type: object
+      required: [job_id, status, trace_id]
+      properties:
+        job_id: { type: string }
+        status: { type: string, enum: [queued, running, completed, failed] }
+        progress:
+          type: object
+          properties:
+            done: { type: integer }
+            total: { type: integer }
+            stage: { type: string }
+        result:
+          oneOf:
+            - $ref: "#/components/schemas/MaskResponse"
+            - type: "null"
+        error:
+          oneOf:
+            - $ref: "#/components/schemas/ErrorResponse"
+            - type: "null"
+        trace_id: { type: string }
+

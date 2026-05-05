@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Streamlit
+.streamlit/
+
+# Packaging / build
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Testing / coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Logs / reports / outputs
+*.log
+reports/
+output/
+outputs/
+
+# Secrets / local config
+.env
+.env.*
+*.key
+*.pem
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+

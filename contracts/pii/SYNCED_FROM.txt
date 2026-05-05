@@ -1,0 +1,7 @@
+This file is updated by scripts/sync_pii_openapi.py
+
+pii_repo_url: (not synced yet)
+pii_repo_ref: (not synced yet)
+pii_openapi_path: openapi.yaml
+synced_at_utc: (not synced yet)
+
